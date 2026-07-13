@@ -46,6 +46,8 @@ namespace Console.AVMAPI
         {
             Console.Clear();
 
+            /* http://fritz.box/login_sid.lua?version=2 */
+
             Console.Wait();
         }
 
