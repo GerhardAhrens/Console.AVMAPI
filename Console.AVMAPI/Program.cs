@@ -51,8 +51,16 @@ namespace Console.AVMAPI
             string pw = Console.ReadText("Fritz-Box Passwort");
             if (string.IsNullOrEmpty(user) == false && string.IsNullOrEmpty(pw) == false)
             {
+                FritzOptions options = new FritzOptions() { UserName = user, Password = pw };
+
+                var systemService = new FritzSystemService(options);
+
+                await systemService.GetInfoAsync();
+
+                Console.WriteLine("Fertig.");
+
                 /* http://fritz.box/login_sid.lua?version=2 */
-                var login = new LoginService(new HttpClient());
+                var login = new LoginService(new HttpClient(), options);
                 SessionInfo session = await login.GetSessionInfoAsync();
                 if (session != null)
                 {

@@ -218,7 +218,6 @@ namespace System
 
             public static bool? ReadBool(string frage = "Ja oder Nein?")
             {
-                ConsoleKeyInfo result;
                 bool currentCursor = Console.CursorVisible;
                 Console.CursorVisible = true;
                 
