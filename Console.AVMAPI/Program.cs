@@ -18,6 +18,7 @@
 
 namespace Console.AVMAPI
 {
+    using Console.AVMAPI.SimpleFritz;
     /* Imports from NET Framework */
     using System;
 
@@ -42,11 +43,20 @@ namespace Console.AVMAPI
             Environment.Exit(0);
         }
 
-        private static void MenuPoint1()
+        private async static void MenuPoint1()
         {
             Console.Clear();
 
-            /* http://fritz.box/login_sid.lua?version=2 */
+            string pw = Console.ReadText("Passwort");
+            if (string.IsNullOrEmpty(pw) == false)
+            {
+                /* http://fritz.box/login_sid.lua?version=2 */
+                var login = new LoginService(new HttpClient());
+                SessionInfo session = await login.GetSessionInfoAsync();
+                ChallengeInfo challenge = ChallengeParser.Parse(session.Challenge);
+                var calculator = new ChallengeResponseCalculator();
+                string response = calculator.Calculate(challenge, pw);
+            }
 
             Console.Wait();
         }
