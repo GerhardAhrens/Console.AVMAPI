@@ -27,5 +27,7 @@ namespace Console.AVMAPI.SimpleFritz
         string ProductClass,
         string SerialNumber,
         string SoftwareVersion,
-        string HardwareVersion);
+        string HardwareVersion,
+        string SpecVersion,
+        uint UpTime);
 }

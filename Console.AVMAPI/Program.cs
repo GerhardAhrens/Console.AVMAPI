@@ -18,9 +18,10 @@
 
 namespace Console.AVMAPI
 {
-    using Console.AVMAPI.SimpleFritz;
     /* Imports from NET Framework */
     using System;
+
+    using Console.AVMAPI.SimpleFritz;
 
     public class Program
     {
@@ -33,7 +34,8 @@ namespace Console.AVMAPI
         private static void Main(string[] args)
         {
             CMenu mainMenu = new CMenu("Fritz 7590 Menü");
-            mainMenu.AddItem("Verbindung zur Fritz-Box herstellen", MenuPoint1);
+            mainMenu.AddItem("Verbindung zur Fritz-Box über REST-API herstellen", MenuPoint1);
+            mainMenu.AddItem("Verbindung zur Fritz-Box über TR-064 (SOAP) herstellen", MenuPoint2);
             mainMenu.AddItem("Beenden", () => ApplicationExit());
             mainMenu.Show();
         }
@@ -53,14 +55,8 @@ namespace Console.AVMAPI
             {
                 FritzOptions options = new FritzOptions() { UserName = user, Password = pw };
 
-                var systemService = new FritzSystemService(options);
-
-                await systemService.GetInfoAsync();
-
-                Console.WriteLine("Fertig.");
-
-                /* http://fritz.box/login_sid.lua?version=2 */
-                var login = new LoginService(new HttpClient(), options);
+                HttpClient httpClient = new();
+                var login = new LoginService(httpClient, options);
                 SessionInfo session = await login.GetSessionInfoAsync();
                 if (session != null)
                 {
@@ -68,18 +64,66 @@ namespace Console.AVMAPI
                     var calculator = new ChallengeResponseCalculator();
                     string response = calculator.Calculate(challenge, pw);
 
+                    /*
                     string url = $"http://fritz.box/login_sid.lua?version=2&username={user}&response={response}";
+                    */
+
+                    var smartHomeService = new FritzSmartHomeService(httpClient, login, options);
+
+                    try
+                    {
+                        IReadOnlyList<SmartHomeDevice> devices = await smartHomeService.GetDevicesAsync();
+
+                        Console.WriteLine($"Gefundene Geräte: {devices.Count}");
+                        Console.Line();
+
+                        foreach (var device in devices)
+                        {
+                            Console.WriteLine($"Name        : {device.Name}");
+                            Console.WriteLine($"AIN         : {device.Ain}");
+                            Console.WriteLine($"Vorhanden   : {device.Present}");
+                            Console.WriteLine($"Switch      : {device.IsSwitch}");
+                            Console.WriteLine($"PowerMeter  : {device.HasPowerMeter}");
+                            Console.WriteLine($"Temperatur  : {device.HasTemperatureSensor}");
+                            Console.Line();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
                 }
             }
 
             Console.Wait();
         }
 
-        private static void UnterMenuPoint(string param)
+        private async static void MenuPoint2()
         {
             Console.Clear();
 
-            Console.Wait(param);
+            string user = Console.ReadText("Fritz-Box Benutzer");
+            string pw = Console.ReadText("Fritz-Box Passwort");
+            if (string.IsNullOrEmpty(user) == false && string.IsNullOrEmpty(pw) == false)
+            {
+                Console.Clear();
+                FritzOptions options = new FritzOptions() { UserName = user, Password = pw };
+
+                FritzSystemService systemService = new FritzSystemService(options);
+                FritzBoxInfo info = await systemService.GetInfoAsync();
+
+                Console.WriteLine($"Hersteller      : {info.Manufacturer}");
+                Console.WriteLine($"ManufacturerOUI : {info.ManufacturerOUI}");
+                Console.WriteLine($"Modell          : {info.ModelName}");
+                Console.WriteLine($"Firmware        : {info.SoftwareVersion}");
+                Console.WriteLine($"Hardware        : {info.HardwareVersion}");
+                Console.WriteLine($"Seriennr.       : {info.SerialNumber}");
+                Console.WriteLine($"Description.    : {info.Description}");
+                Console.WriteLine($"ProductClass.   : {info.ProductClass}");
+                Console.WriteLine($"SpecVersion.    : {info.SpecVersion}");
+            }
+
+            Console.Wait();
         }
     }
 }

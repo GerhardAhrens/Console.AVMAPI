@@ -16,9 +16,10 @@
 namespace Console.AVMAPI.SimpleFritz
 {
     using System;
-    using System.Collections.Generic;
     using System.Net;
     using System.Text;
+    using System.Xml.Linq;
+    using System.Xml.Serialization;
 
     public sealed class FritzSystemService : IFritzSystemService
     {
@@ -47,11 +48,27 @@ namespace Console.AVMAPI.SimpleFritz
 
             string xml = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            // Zum Testen erst einmal ausgeben
-            Console.WriteLine(xml);
+            XDocument doc = XDocument.Parse(xml);
+            XNamespace soap = "http://schemas.xmlsoap.org/soap/envelope/";
+            XElement responseElement = doc.Root!.Element(soap + "Body")!.Elements().Single();
+            string responseXml = responseElement.ToString();
 
-            // XML wird im nächsten Schritt ausgewertet
-            throw new NotImplementedException();
+            XDocument doc1 = XDocument.Parse(responseXml);
+            XElement root = doc1.Root!;
+
+            string deviceLog = root.ValueOrEmpty("NewDeviceLog");
+
+            return new FritzBoxInfo(
+                root.ValueOrEmpty("NewManufacturerName"),
+                root.ValueOrEmpty("NewManufacturerOUI"),
+                root.ValueOrEmpty("NewModelName"),
+                root.ValueOrEmpty("NewDescription"),
+                root.ValueOrEmpty("NewProductClass"),
+                root.ValueOrEmpty("NewSerialNumber"),
+                root.ValueOrEmpty("NewSoftwareVersion"),
+                root.ValueOrEmpty("NewHardwareVersion"),
+                root.ValueOrEmpty("NewSpecVersion"),
+                root.UIntValue("NewUpTime"));
         }
 
         private HttpRequestMessage CreateRequest()
@@ -63,6 +80,15 @@ namespace Console.AVMAPI.SimpleFritz
             request.Content = new StringContent(CreateEnvelope(), Encoding.UTF8, "text/xml");
 
             return request;
+        }
+
+        private static T Deserialize<T>(string xml)
+        {
+            var serializer = new XmlSerializer(typeof(T));
+
+            using var reader = new StringReader(xml);
+
+            return (T)serializer.Deserialize(reader)!;
         }
 
         private static string CreateEnvelope()
@@ -77,6 +103,21 @@ namespace Console.AVMAPI.SimpleFritz
                   </s:Body>
                 </s:Envelope>
                 """;
+        }
+    }
+
+    internal static class XmlExtensions
+    {
+        public static string ValueOrEmpty(this XElement element, string name)
+        {
+            return (string)element.Element(name) ?? string.Empty;
+        }
+
+        public static uint UIntValue(this XElement element, string name)
+        {
+            bool v = uint.TryParse((string)element.Element(name), out uint value);
+
+            return value;
         }
     }
 }

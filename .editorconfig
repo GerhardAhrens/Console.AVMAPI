@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# CA1001: Typen mit eigenen verwerfbaren Feldern müssen verwerfbar sein
+dotnet_diagnostic.CA1001.severity = none
+
+# CA5369: XmlReader für "XmlSerializer.Deserialize()" verwenden
+dotnet_diagnostic.CA5369.severity = none

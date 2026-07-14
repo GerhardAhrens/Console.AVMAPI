@@ -19,6 +19,7 @@ namespace Console.AVMAPI.SimpleFritz
     using System.Collections.Generic;
     using System.Security.Cryptography;
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Member als statisch markieren", Justification = "<Ausstehend>")]
     public sealed class ChallengeResponseCalculator
     {
         public string Calculate(ChallengeInfo challenge, string password)
