@@ -47,7 +47,8 @@ namespace Console.AVMAPI
         {
             Console.Clear();
 
-            string pw = Console.ReadText("Passwort");
+            string user = Console.ReadText("Fritz-Box Benutzer");
+            string pw = Console.ReadText("Fritz-Box Passwort");
             if (string.IsNullOrEmpty(pw) == false)
             {
                 /* http://fritz.box/login_sid.lua?version=2 */
@@ -56,6 +57,8 @@ namespace Console.AVMAPI
                 ChallengeInfo challenge = ChallengeParser.Parse(session.Challenge);
                 var calculator = new ChallengeResponseCalculator();
                 string response = calculator.Calculate(challenge, pw);
+
+                string url = $"http://fritz.box/login_sid.lua?version=2&username={user}&response={response}";
             }
 
             Console.Wait();
