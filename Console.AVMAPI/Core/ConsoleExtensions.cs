@@ -19,6 +19,7 @@
 namespace System
 {
     using System.Globalization;
+    using System.Text;
 
     internal static class ConsoleExtensions
     {
@@ -159,21 +160,20 @@ namespace System
 
             public static string ReadText(string frage = "Bitte einen Text eingeben")
             {
-                ConsoleKeyInfo result;
                 bool currentCursor = Console.CursorVisible;
                 Console.CursorVisible = true;
 
+                Console.WriteLine();
                 while (true)
                 {
                     Console.Write($"{frage}: ");
-                    result = Console.ReadKey(intercept: true);
-                    if (result.Key == ConsoleKey.Escape)
+
+                    string eingabe = GetInputText();
+                    if (eingabe == null)
                     {
                         Console.CursorVisible = currentCursor;
-                        return string.Empty;
+                        return eingabe;
                     }
-
-                    string eingabe = Console.ReadLine();
 
                     if (string.IsNullOrEmpty(eingabe) == false)
                     {
@@ -189,22 +189,20 @@ namespace System
 
             public static int ReadInt(string frage = "Bitte eine Zahl eingeben")
             {
-                ConsoleKeyInfo result;
                 bool currentCursor = Console.CursorVisible;
                 Console.CursorVisible = true;
 
+                Console.WriteLine();
                 while (true)
                 {
                     Console.Write($"{frage}: ");
 
-                    result = Console.ReadKey(intercept: true);
-                    if (result.Key == ConsoleKey.Escape)
+                    string eingabe = GetInputText();
+                    if (eingabe == null)
                     {
                         Console.CursorVisible = currentCursor;
                         return 0;
                     }
-
-                    string eingabe = Console.ReadLine();
 
                     if (int.TryParse(eingabe, out int zahl))
                     {
@@ -223,19 +221,19 @@ namespace System
                 ConsoleKeyInfo result;
                 bool currentCursor = Console.CursorVisible;
                 Console.CursorVisible = true;
+                
+                Console.WriteLine();
 
                 while (true)
                 {
                     Console.Write($"{frage} (j/n): ");
 
-                    result = Console.ReadKey(intercept: true);
-                    if (result.Key == ConsoleKey.Escape)
+                    string eingabe = GetInputText().Trim().ToLower(CultureInfo.CurrentCulture);
+                    if (eingabe == null)
                     {
                         Console.CursorVisible = currentCursor;
-                        return null;
+                        return false;
                     }
-
-                    string eingabe = Console.ReadLine()?.Trim().ToLower(CultureInfo.CurrentCulture);
 
                     switch (eingabe)
                     {
@@ -316,5 +314,42 @@ namespace System
                 return Dump.Get(instance);
             }
         }
+
+        static string GetInputText()
+        {
+            StringBuilder sb = new StringBuilder();
+            ConsoleKeyInfo keyInfo;
+
+            while (true)
+            {
+                keyInfo = Console.ReadKey(intercept: true);
+
+                // Abbruch mit ESC
+                if (keyInfo.Key == ConsoleKey.Escape)
+                {
+                    return null;
+                }
+                // Eingabe beenden mit Enter
+                if (keyInfo.Key == ConsoleKey.Enter)
+                {
+                    break;
+                }
+                // Zeichen löschen mit Backspace
+                if (keyInfo.Key == ConsoleKey.Backspace && sb.Length > 0)
+                {
+                    sb.Remove(sb.Length - 1, 1);
+                    Console.Write("\b \b");
+                }
+                // Normales Zeichen zur Eingabe hinzufügen
+                else if (!char.IsControl(keyInfo.KeyChar))
+                {
+                    sb.Append(keyInfo.KeyChar);
+                    Console.Write(keyInfo.KeyChar);
+                }
+            }
+
+            return sb.ToString();
+        }
     }
 }
+

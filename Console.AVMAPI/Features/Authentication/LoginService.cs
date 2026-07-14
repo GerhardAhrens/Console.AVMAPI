@@ -30,13 +30,21 @@ namespace Console.AVMAPI.SimpleFritz
 
         public async Task<SessionInfo> GetSessionInfoAsync()
         {
+            SessionInfo sessionInfo = null;
             string xml = await _httpClient.GetStringAsync("http://fritz.box/login_sid.lua?version=2");
 
             XmlSerializer serializer = new(typeof(SessionInfo));
-
             using StringReader reader = new(xml);
+            try
+            {
+                sessionInfo = (SessionInfo)serializer.Deserialize(reader)!;
+            }
+            catch (InvalidOperationException ex)
+            {
+                string errorText = ex.Message;
+            }
 
-            return (SessionInfo)serializer.Deserialize(reader)!;
+            return sessionInfo;
         }
     }
 }

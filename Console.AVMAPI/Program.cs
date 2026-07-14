@@ -49,16 +49,19 @@ namespace Console.AVMAPI
 
             string user = Console.ReadText("Fritz-Box Benutzer");
             string pw = Console.ReadText("Fritz-Box Passwort");
-            if (string.IsNullOrEmpty(pw) == false)
+            if (string.IsNullOrEmpty(user) == false && string.IsNullOrEmpty(pw) == false)
             {
                 /* http://fritz.box/login_sid.lua?version=2 */
                 var login = new LoginService(new HttpClient());
                 SessionInfo session = await login.GetSessionInfoAsync();
-                ChallengeInfo challenge = ChallengeParser.Parse(session.Challenge);
-                var calculator = new ChallengeResponseCalculator();
-                string response = calculator.Calculate(challenge, pw);
+                if (session != null)
+                {
+                    ChallengeInfo challenge = ChallengeParser.Parse(session.Challenge);
+                    var calculator = new ChallengeResponseCalculator();
+                    string response = calculator.Calculate(challenge, pw);
 
-                string url = $"http://fritz.box/login_sid.lua?version=2&username={user}&response={response}";
+                    string url = $"http://fritz.box/login_sid.lua?version=2&username={user}&response={response}";
+                }
             }
 
             Console.Wait();
