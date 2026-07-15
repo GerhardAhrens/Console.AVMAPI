@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------
-// <copyright file="PowerMeterInfo.cs" company="Lifeprojects.de">
-//     Class: PowerMeterInfo
+// <copyright file="StatisticSeries.cs" company="Lifeprojects.de">
+//     Class: StatisticSeries
 //     Copyright © Lifeprojects.de 2026
 // </copyright>
 //
@@ -19,11 +19,5 @@
 
 namespace Console.AVMAPI.SimpleFritz
 {
-    public sealed record PowerMeterInfo(
-        double PowerWatts,
-        double VoltageVolts,
-        double EnergyWh)
-    {
-        public double EnergyKWh => EnergyWh / 1000.0;
-    }
+    public sealed record StatisticSeries(string Name, int GridSeconds, IReadOnlyList<StatisticValue> Values);
 }

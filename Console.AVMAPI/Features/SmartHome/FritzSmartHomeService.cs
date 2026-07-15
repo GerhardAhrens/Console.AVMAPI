@@ -95,13 +95,13 @@ namespace Console.AVMAPI.SimpleFritz
                     {
                         power = new PowerMeterInfo(
 
-                            Power:
+                            PowerWatts:
                                 int.Parse((string)powerElement.Element("power") ?? "0") / 1000.0,
 
-                            Voltage:
+                            VoltageVolts:
                                 int.Parse((string)powerElement.Element("voltage") ?? "0") / 1000.0,
 
-                            Energy:
+                            EnergyWh:
                                 int.Parse((string)powerElement.Element("energy") ?? "0")); /* als Wh */
                     }
                 }
@@ -137,6 +137,21 @@ namespace Console.AVMAPI.SimpleFritz
             }
 
             return result;
+        }
+
+        public async Task<DeviceStatistics> GetDeviceStatisticsAsync(string ain, CancellationToken cancellationToken = default)
+        {
+            string sid = await _authentication.GetSidAsync(cancellationToken);
+
+            string url =
+                $"{_options.Host}/webservices/homeautoswitch.lua" +
+                $"?switchcmd=getbasicdevicestats" +
+                $"&ain={Uri.EscapeDataString(ain)}" +
+                $"&sid={sid}";
+
+            string xml = await _httpClient.GetStringAsync(url, cancellationToken);
+
+            return new StatisticsParser().Parse(xml);
         }
     }
 }

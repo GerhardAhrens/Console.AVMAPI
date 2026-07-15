@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------
-// <copyright file="PowerMeterInfo.cs" company="Lifeprojects.de">
-//     Class: PowerMeterInfo
+// <copyright file="StatisticValue.cs" company="Lifeprojects.de">
+//     Class: StatisticValue
 //     Copyright © Lifeprojects.de 2026
 // </copyright>
 //
@@ -11,19 +11,9 @@
 // <summary>
 // Template für eine neue Record-Klasse
 // </summary>
-// <Remark>
-// Die Parameternamen sollen in PascalCase geschrieben werden, da diese in der späteren
-// als Property Getter verwendet werden.
-// </Remark>
 //-----------------------------------------------------------------------
 
 namespace Console.AVMAPI.SimpleFritz
 {
-    public sealed record PowerMeterInfo(
-        double PowerWatts,
-        double VoltageVolts,
-        double EnergyWh)
-    {
-        public double EnergyKWh => EnergyWh / 1000.0;
-    }
+    public sealed record StatisticValue(DateTime Timestamp, double Value);
 }

@@ -18,5 +18,7 @@ namespace Console.AVMAPI.SimpleFritz
     public interface IFritzSmartHomeService
     {
         Task<IReadOnlyList<SmartHomeDevice>> GetDevicesAsync(CancellationToken cancellationToken = default);
+
+        Task<DeviceStatistics> GetDeviceStatisticsAsync(string ain, CancellationToken cancellationToken = default);
     }
 }
