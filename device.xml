@@ -1,0 +1,23 @@
+ <device identifier="08761 0385453" id="16" functionbitmask="35712" fwversion="04.32" manufacturer="AVM" productname="FRITZ!Smart Energy 200">
+   <present>1</present>
+   <txbusy>0</txbusy>
+   <name>Arbeitszimmer HL2070N</name>
+   <switch>
+     <state>1</state>
+     <mode>auto</mode>
+     <lock>0</lock>
+     <devicelock>0</devicelock>
+   </switch>
+   <simpleonoff>
+     <state>1</state>
+   </simpleonoff>
+   <powermeter>
+     <voltage>234196</voltage>
+     <power>780</power>
+     <energy>113793</energy>
+   </powermeter>
+   <temperature>
+     <celsius>285</celsius>
+     <offset>0</offset>
+   </temperature>
+ </device>

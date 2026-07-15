@@ -125,6 +125,7 @@ namespace Console.AVMAPI
 
                     try
                     {
+                        Console.Clear();
                         IReadOnlyList<SmartHomeDevice> devices = await smartHomeService.GetDevicesAsync();
 
                         Console.WriteLine($"Gefundene Geräte: {devices.Count}");
@@ -134,11 +135,15 @@ namespace Console.AVMAPI
                         {
                             Console.WriteLine($"AIN         : {device.Ain}");
                             Console.WriteLine($"Name        : {device.Name}");
-                            Console.WriteLine($"Identifier  : {device.Identifier}");
+                            Console.WriteLine($"Id          : {device.Id}");
                             Console.WriteLine($"Vorhanden   : {device.Present}");
                             Console.WriteLine($"Switch      : {device.IsSwitch}");
                             Console.WriteLine($"Temperatur  : {device.HasTemperatureSensor}");
                             Console.WriteLine($"PowerMeter  : {device.HasPowerMeter}");
+                            Console.WriteLine($"Spannung V  : {device.PowerMeter?.Voltage}");
+                            Console.WriteLine($"Leistung W  :{device.PowerMeter?.Power}");
+                            Console.WriteLine($"Temparatur  : {device.Temperature?.Celsius}");
+                            Console.WriteLine($"Status      : {device.Switch?.State}"); 
                             Console.Line();
                         }
                     }

@@ -58,18 +58,82 @@ namespace Console.AVMAPI.SimpleFritz
             foreach (XElement device in doc.Descendants("device"))
             {
                 string ain = (string)device.Attribute("identifier") ?? "";
-                string identifier = (string)device.Attribute("id") ?? "";
-                bool present = ((string)device.Attribute("present")) == "1";
-                string name = (string)device.Element("name") ?? "";
-                int functionBitMask =  int.Parse((string)device.Attribute("functionbitmask") ?? "0",CultureInfo.CurrentCulture);
+                int id = Convert.ToInt32((string)device.Attribute("id") ?? "0");
+                int functionBitMask = int.Parse((string)device.Attribute("functionbitmask") ?? "0", CultureInfo.CurrentCulture);
 
-                result.Add(new SmartHomeDevice(Ain: ain,
-                        Name: name,
-                        Identifier: identifier,
-                        Present: present,
-                        IsSwitch: (functionBitMask & 0x200) != 0,
-                        HasTemperatureSensor: (functionBitMask & 0x100) != 0,
-                        HasPowerMeter: (functionBitMask & 0x04) != 0));
+                bool present = ((string)device.Element("present")) == "1" ? true : false;
+                string name = (string)device.Element("name") ?? "";
+
+                XElement switchElement = device.Element("switch");
+                XElement powerElement = device.Element("powermeter");
+                XElement tempElement = device.Element("temperature");
+
+                SwitchInfo switchInfo = null;
+
+                if (present == true)
+                {
+                    if (switchElement != null)
+                    {
+                        switchInfo = new SwitchInfo(
+
+                            State:
+                                (string)switchElement.Element("state") == "1",
+
+                            Lock:
+                                (string)switchElement.Element("lock") == "1",
+
+                            DeviceLock:
+                                (string)switchElement.Element("devicelock") == "1");
+                    }
+                }
+
+                PowerMeterInfo power = null;
+
+                if (present == true)
+                {
+                    if (powerElement != null)
+                    {
+                        power = new PowerMeterInfo(
+
+                            Power:
+                                int.Parse((string)powerElement.Element("power") ?? "0") / 1000.0,
+
+                            Voltage:
+                                int.Parse((string)powerElement.Element("voltage") ?? "0") / 1000.0,
+
+                            Energy:
+                                int.Parse((string)powerElement.Element("energy") ?? "0")); /* als Wh */
+                    }
+                }
+
+                TemperatureInfo temperature = null;
+
+                if (present == true)
+                {
+                    if (tempElement != null)
+                    {
+                        temperature = new TemperatureInfo(
+
+                            Celsius:
+                                int.Parse((string)tempElement.Element("celsius") ?? "0") / 10.0,
+
+                            Offset:
+                                int.Parse((string)tempElement.Element("offset") ?? "0") / 10.0);
+                    }
+                }
+
+                var actor = new SmartHomeDevice(ain,
+                    id,
+                    name,
+                    present,
+                    functionBitMask)
+                {
+                    Switch = switchInfo,
+                    PowerMeter = power,
+                    Temperature = temperature
+                };
+
+                result.Add(actor);
             }
 
             return result;

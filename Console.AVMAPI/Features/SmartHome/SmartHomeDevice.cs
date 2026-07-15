@@ -19,12 +19,18 @@
 
 namespace Console.AVMAPI.SimpleFritz
 {
-    public sealed record SmartHomeDevice(
-        string Ain,
-        string Name,
-        string Identifier,
-        bool Present,
-        bool IsSwitch,
-        bool HasTemperatureSensor,
-        bool HasPowerMeter);
+    public sealed record SmartHomeDevice(string Ain, int Id, string Name, bool Present, int FunctionBitMask)
+    {
+        public SwitchInfo Switch { get; init; }
+
+        public PowerMeterInfo PowerMeter { get; init; }
+
+        public TemperatureInfo Temperature { get; init; }
+
+        public bool IsSwitch => (FunctionBitMask & 0x200) != 0;
+
+        public bool HasPowerMeter => (FunctionBitMask & 0x04) != 0;
+
+        public bool HasTemperatureSensor => (FunctionBitMask & 0x100) != 0;
+    }
 }
