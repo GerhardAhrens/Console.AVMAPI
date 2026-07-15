@@ -34,8 +34,9 @@ namespace Console.AVMAPI
         private static void Main(string[] args)
         {
             CMenu mainMenu = new CMenu("Fritz 7590 Menü");
-            mainMenu.AddItem("Verbindung zur Fritz-Box über REST-API herstellen", MenuPoint1);
             mainMenu.AddItem("Verbindung zur Fritz-Box über TR-064 (SOAP) herstellen", MenuPoint2);
+            mainMenu.AddItem("Verbindung zur Fritz-Box über REST-API herstellen", MenuPoint1);
+            mainMenu.AddItem("Smart Home, Liste der Aktoren über REST-API", MenuPoint3);
             mainMenu.AddItem("Beenden", () => ApplicationExit());
             mainMenu.Show();
         }
@@ -46,59 +47,6 @@ namespace Console.AVMAPI
         }
 
         private async static void MenuPoint1()
-        {
-            Console.Clear();
-
-            string user = Console.ReadText("Fritz-Box Benutzer");
-            string pw = Console.ReadText("Fritz-Box Passwort");
-            if (string.IsNullOrEmpty(user) == false && string.IsNullOrEmpty(pw) == false)
-            {
-                FritzOptions options = new FritzOptions() { UserName = user, Password = pw };
-
-                HttpClient httpClient = new();
-                var login = new LoginService(httpClient, options);
-                SessionInfo session = await login.GetSessionInfoAsync();
-                if (session != null)
-                {
-                    ChallengeInfo challenge = ChallengeParser.Parse(session.Challenge);
-                    var calculator = new ChallengeResponseCalculator();
-                    string response = calculator.Calculate(challenge, pw);
-
-                    /*
-                    string url = $"http://fritz.box/login_sid.lua?version=2&username={user}&response={response}";
-                    */
-
-                    var smartHomeService = new FritzSmartHomeService(httpClient, login, options);
-
-                    try
-                    {
-                        IReadOnlyList<SmartHomeDevice> devices = await smartHomeService.GetDevicesAsync();
-
-                        Console.WriteLine($"Gefundene Geräte: {devices.Count}");
-                        Console.Line();
-
-                        foreach (var device in devices)
-                        {
-                            Console.WriteLine($"Name        : {device.Name}");
-                            Console.WriteLine($"AIN         : {device.Ain}");
-                            Console.WriteLine($"Vorhanden   : {device.Present}");
-                            Console.WriteLine($"Switch      : {device.IsSwitch}");
-                            Console.WriteLine($"PowerMeter  : {device.HasPowerMeter}");
-                            Console.WriteLine($"Temperatur  : {device.HasTemperatureSensor}");
-                            Console.Line();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex);
-                    }
-                }
-            }
-
-            Console.Wait();
-        }
-
-        private async static void MenuPoint2()
         {
             Console.Clear();
 
@@ -121,6 +69,84 @@ namespace Console.AVMAPI
                 Console.WriteLine($"Description.    : {info.Description}");
                 Console.WriteLine($"ProductClass.   : {info.ProductClass}");
                 Console.WriteLine($"SpecVersion.    : {info.SpecVersion}");
+            }
+
+            Console.Wait();
+        }
+
+        private async static void MenuPoint2()
+        {
+            Console.Clear();
+
+            string user = Console.ReadText("Fritz-Box Benutzer");
+            string pw = Console.ReadText("Fritz-Box Passwort");
+            if (string.IsNullOrEmpty(user) == false && string.IsNullOrEmpty(pw) == false)
+            {
+                FritzOptions options = new FritzOptions() { UserName = user, Password = pw };
+
+                HttpClient httpClient = new();
+                var login = new LoginService(httpClient, options);
+                SessionInfo session = await login.GetSessionInfoAsync();
+                if (session != null)
+                {
+                    ChallengeInfo challenge = ChallengeParser.Parse(session.Challenge);
+                    var calculator = new ChallengeResponseCalculator();
+                    string response = calculator.Calculate(challenge, pw);
+
+                    string url = $"http://fritz.box/login_sid.lua?version=2&username={user}&response={response}";
+                    Console.WriteSuccess(url);
+                }
+            }
+
+            Console.Wait();
+        }
+
+        private async static void MenuPoint3()
+        {
+            Console.Clear();
+
+            string user = Console.ReadText("Fritz-Box Benutzer");
+            string pw = Console.ReadText("Fritz-Box Passwort");
+            if (string.IsNullOrEmpty(user) == false && string.IsNullOrEmpty(pw) == false)
+            {
+                FritzOptions options = new FritzOptions() { UserName = user, Password = pw };
+
+                HttpClient httpClient = new();
+                LoginService login = new LoginService(httpClient, options);
+                SessionInfo session = await login.GetSessionInfoAsync();
+                if (session != null)
+                {
+                    ChallengeInfo challenge = ChallengeParser.Parse(session.Challenge);
+                    ChallengeResponseCalculator calculator = new ChallengeResponseCalculator();
+                    string response = calculator.Calculate(challenge, pw);
+
+                    /* Liste der Smart Home Aktoren abrufen */
+                    var smartHomeService = new FritzSmartHomeService(httpClient, login, options);
+
+                    try
+                    {
+                        IReadOnlyList<SmartHomeDevice> devices = await smartHomeService.GetDevicesAsync();
+
+                        Console.WriteLine($"Gefundene Geräte: {devices.Count}");
+                        Console.Line();
+
+                        foreach (var device in devices)
+                        {
+                            Console.WriteLine($"AIN         : {device.Ain}");
+                            Console.WriteLine($"Name        : {device.Name}");
+                            Console.WriteLine($"Identifier  : {device.Identifier}");
+                            Console.WriteLine($"Vorhanden   : {device.Present}");
+                            Console.WriteLine($"Switch      : {device.IsSwitch}");
+                            Console.WriteLine($"Temperatur  : {device.HasTemperatureSensor}");
+                            Console.WriteLine($"PowerMeter  : {device.HasPowerMeter}");
+                            Console.Line();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteError(ex.Message);
+                    }
+                }
             }
 
             Console.Wait();

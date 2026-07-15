@@ -37,10 +37,7 @@ namespace Console.AVMAPI.SimpleFritz
         {
             string sid =  await _authentication.GetSidAsync(cancellationToken);
 
-            return
-                $"{_options.Host}/webservices/homeautoswitch.lua" +
-                $"?switchcmd=getdevicelistinfos" +
-                $"&sid={sid}";
+            return $"{_options.Host}/webservices/homeautoswitch.lua?switchcmd=getdevicelistinfos&sid={sid}";
         }
 
         public async Task<IReadOnlyList<SmartHomeDevice>> GetDevicesAsync(CancellationToken cancellationToken = default)
@@ -61,13 +58,9 @@ namespace Console.AVMAPI.SimpleFritz
             foreach (XElement device in doc.Descendants("device"))
             {
                 string ain = (string)device.Attribute("identifier") ?? "";
-
                 string identifier = (string)device.Attribute("id") ?? "";
-
                 bool present = ((string)device.Attribute("present")) == "1";
-
                 string name = (string)device.Element("name") ?? "";
-
                 int functionBitMask =  int.Parse((string)device.Attribute("functionbitmask") ?? "0",CultureInfo.CurrentCulture);
 
                 result.Add(new SmartHomeDevice(Ain: ain,

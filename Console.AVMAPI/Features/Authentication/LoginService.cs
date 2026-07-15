@@ -52,8 +52,10 @@ namespace Console.AVMAPI.SimpleFritz
 
         public async Task<string> GetSidAsync(CancellationToken cancellationToken = default)
         {
-            if (!string.IsNullOrWhiteSpace(_sid))
+            if (string.IsNullOrWhiteSpace(_sid) == false)
+            {
                 return _sid;
+            }
 
             _sid = await LoginAsync(cancellationToken);
 
@@ -70,11 +72,7 @@ namespace Console.AVMAPI.SimpleFritz
 
             string response = calculator.Calculate(challenge, _options.Password);
 
-            string url =
-                $"{_options.Host}/login_sid.lua" +
-                $"?version=2" +
-                $"&username={Uri.EscapeDataString(_options.UserName)}" +
-                $"&response={Uri.EscapeDataString(response)}";
+            string url = $"{_options.Host}/login_sid.lua" +  $"?version=2" + $"&username={Uri.EscapeDataString(_options.UserName)}" + $"&response={Uri.EscapeDataString(response)}";
 
             string xml = await _httpClient.GetStringAsync(url, cancellationToken);
 
