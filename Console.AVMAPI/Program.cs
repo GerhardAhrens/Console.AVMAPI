@@ -23,6 +23,8 @@ namespace Console.AVMAPI
 
     using Console.AVMAPI.SimpleFritz;
 
+    using Windows.Foundation;
+
     public class Program
     {
         public Program()
@@ -38,6 +40,7 @@ namespace Console.AVMAPI
             mainMenu.AddItem("Verbindung zur Fritz-Box über REST-API herstellen", MenuPoint1);
             mainMenu.AddItem("Smart Home, Liste der Aktoren über REST-API", MenuPoint3);
             mainMenu.AddItem("Smart Home, Aktoren Statistik", MenuPoint4);
+            mainMenu.AddItem("Smart Home, Aktoren Statistik - Historisch", MenuPoint5);
             mainMenu.AddItem("Beenden", () => ApplicationExit());
             mainMenu.Show();
         }
@@ -113,14 +116,9 @@ namespace Console.AVMAPI
                 FritzOptions options = new FritzOptions() { UserName = user, Password = pw };
 
                 HttpClient httpClient = new();
-                LoginService login = new LoginService(httpClient, options);
-                SessionInfo session = await login.GetSessionInfoAsync();
-                if (session != null)
+                var login = new LoginService(httpClient, options);
+                if (login != null)
                 {
-                    ChallengeInfo challenge = ChallengeParser.Parse(session.Challenge);
-                    ChallengeResponseCalculator calculator = new ChallengeResponseCalculator();
-                    string response = calculator.Calculate(challenge, pw);
-
                     /* Liste der Smart Home Aktoren abrufen */
                     var smartHomeService = new FritzSmartHomeService(httpClient, login, options);
 
@@ -241,6 +239,94 @@ namespace Console.AVMAPI
                 catch (Exception ex)
                 {
                     Console.WriteError(ex.Message);
+                }
+            }
+
+            Console.Wait();
+        }
+
+        private async static void MenuPoint5()
+        {
+            Console.Clear();
+
+            string user = Console.ReadText("Fritz-Box Benutzer");
+            string pw = Console.ReadText("Fritz-Box Passwort");
+            if (string.IsNullOrEmpty(user) == false && string.IsNullOrEmpty(pw) == false)
+            {
+                FritzOptions options = new FritzOptions() { UserName = user, Password = pw };
+
+                HttpClient httpClient = new();
+                var login = new LoginService(httpClient, options);
+                if (login != null)
+                {
+                    try
+                    {
+                        var smartHome = new FritzSmartHomeService(httpClient, login, options);
+                        Console.Clear();
+                        IReadOnlyList<SmartHomeDevice> devices = await smartHome.GetDevicesAsync();
+                        Console.Line();
+                        Console.WriteText($"Gefundene Geräte : {devices.Count}");
+                        Console.Line();
+
+                        foreach (var device in devices)
+                        {
+                            Console.WriteLine($"{device.Name} ({device.Ain})");
+                        }
+
+                        SmartHomeDevice device1 = devices.FirstOrDefault(d => d.Ain == devices[2].Ain);
+                        if (device1 == null)
+                        {
+                            Console.WriteLine();
+                            Console.WriteError("Kein Powermeter gefunden.");
+                            return;
+                        }
+
+                        Console.Line();
+                        Console.WriteText($"Ausgewähltes Gerät : {device1.Name}");
+                        Console.WriteText($"AIN                : {device1.Ain}");
+
+                        //-----------------------------------------------------
+                        // Aktuelle Leistungsdaten
+                        //-----------------------------------------------------
+
+                        if (device1.PowerMeter != null)
+                        {
+                            Console.Line();
+                            Console.WriteText("Aktuelle Messwerte");
+                            Console.WriteText($"Leistung : {device1.PowerMeter.PowerWatts:F3} W");
+                            Console.WriteText($"Spannung : {device1.PowerMeter.VoltageVolts:F1} V");
+                            Console.WriteText($"Gesamt   : {device1.PowerMeter.EnergyKWh:F3} kWh");
+                        }
+
+                        //-----------------------------------------------------
+                        // Historische Statistik
+                        //-----------------------------------------------------
+
+                        DeviceStatistics statistics = await smartHome.GetDeviceStatisticsAsync(device1.Ain);
+
+                        Console.Line();
+                        Console.WriteText("Aktueller Monat");
+
+                        if (statistics.EnergyDaily != null)
+                        {
+                            double monatSum = statistics.EnergyDaily.Values.Where(w => w.Timestamp.Year == DateTime.Now.Year && w.Timestamp.Month == DateTime.Now.Month).Sum(s => s.Value);
+                            Console.WriteLine($"Summe für Monat/Jahr {DateTime.Now:MM.yyyy}  {monatSum / 1000} KW/h");
+                        }
+
+                        Console.Line();
+                        Console.WriteText("Aktuelles jahr");
+
+                        if (statistics.EnergyMonthly != null)
+                        {
+                            double jahrSum= statistics.EnergyMonthly.Values.Where(w => w.Timestamp.Year == DateTime.Now.Year).Sum(s => s.Value);
+                            Console.WriteLine($"Summe für Jahr {DateTime.Now:yyyy}  {jahrSum / 1000} KW/h");
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteError(ex.Message);
+                    }
                 }
 
             }
